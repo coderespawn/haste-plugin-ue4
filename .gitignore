@@ -1,0 +1,9 @@
+DerivedDataCache
+Intermediate
+Saved
+Binaries
+Deploy
+Build
+*.sdf
+*.opensdf
+*.v12.suo
