@@ -6,7 +6,7 @@
 DECLARE_LOG_CATEGORY_EXTERN(HasteMode, Log, All);
 
 /**
- * Foliage editor mode
+ * Haste editor mode
  */
 class FEdModeHaste : public FEdMode
 {
@@ -69,7 +69,7 @@ public:
 	/** FEdMode: Called when mouse drag input it applied */
 	virtual bool InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport, FVector& InDrag, FRotator& InRot, FVector& InScale) override;
 
-	/** FEdMode: Render elements for the Foliage tool */
+	/** FEdMode: Render elements for the Haste tool */
 	virtual void Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI) override;
 
 	/** FEdMode: Render HUD elements for this tool */
