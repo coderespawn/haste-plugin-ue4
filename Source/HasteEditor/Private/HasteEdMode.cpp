@@ -480,6 +480,10 @@ bool FEdModeHaste::HandleClick(FEditorViewportClient* InViewportClient, HHitProx
 {
 	if (ActiveBrushMesh && !bMeshRotating) {
 		AStaticMeshActor* MeshActor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass());
+
+		// Rename the display name of the new actor in the editor to reflect the mesh that is being created from.
+		FActorLabelUtilities::SetActorLabelUnique(MeshActor, ActiveBrushMesh->GetName());
+
 		MeshActor->GetStaticMeshComponent()->StaticMesh = ActiveBrushMesh;
 		MeshActor->ReregisterAllComponents();
 		FTransform Transform(BrushRotation, BrushLocation, BrushScale);
