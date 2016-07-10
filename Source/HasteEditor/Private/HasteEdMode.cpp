@@ -48,7 +48,7 @@ FEdModeHaste::FEdModeHaste()
 		ActiveBrushMesh = nullptr;
 	}
 
-	BrushMeshComponent = ConstructObject<UStaticMeshComponent>(UStaticMeshComponent::StaticClass());
+	BrushMeshComponent = NewObject<UStaticMeshComponent>();
 	BrushMeshComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	BrushMeshComponent->SetCollisionObjectType(ECC_WorldDynamic);
 	BrushMeshComponent->StaticMesh = DefaultBrushMesh;
@@ -238,7 +238,7 @@ static bool HasteTrace(UWorld* InWorld, FHitResult& OutHit, FVector InStart, FVe
 	bool bResult = true;
 	while (true)
 	{
-		bResult = InWorld->LineTraceSingle(OutHit, InStart, InEnd, QueryParams, FCollisionObjectQueryParams(ECC_WorldStatic));
+		bResult = InWorld->LineTraceSingleByChannel(OutHit, InStart, InEnd, ECC_WorldStatic, QueryParams);
 		if (bResult)
 		{
 			// In the editor traces can hit "No Collision" type actors, so ugh.
