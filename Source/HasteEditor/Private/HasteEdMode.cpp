@@ -1,4 +1,4 @@
-// Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
+// Copyright 2015-2016 Code Respawn Technologies. MIT License
 
 #include "HasteEditorPrivatePCH.h"
 #include "HasteEdMode.h"
