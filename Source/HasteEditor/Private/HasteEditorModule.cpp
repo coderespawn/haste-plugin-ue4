@@ -12,14 +12,12 @@
 
 #define LOCTEXT_NAMESPACE "HasteEditorModule" 
 
-const static FEditorModeID EM_Haste(TEXT("EM_Haste"));
-
 class FHasteEditorModule : public IHasteEditorModule
 {
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override {
 		FEditorModeRegistry::Get().RegisterMode<FEdModeHaste>(
-			EM_Haste,
+			FEdModeHaste::EM_Haste,
 			NSLOCTEXT("EditorModes", "HasteMode", "Haste"),
 			FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.FoliageMode", "LevelEditor.FoliageMode.Small"),
 			true, 400
@@ -28,7 +26,7 @@ class FHasteEditorModule : public IHasteEditorModule
 
 
 	virtual void ShutdownModule() override {
-		FEditorModeRegistry::Get().UnregisterMode(EM_Haste);
+		FEditorModeRegistry::Get().UnregisterMode(FEdModeHaste::EM_Haste);
 	}
 };
 

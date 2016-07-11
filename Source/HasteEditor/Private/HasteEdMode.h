@@ -3,7 +3,7 @@
 #pragma once
 #include "EdMode.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(HasteMode, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogHasteMode, Log, All);
 
 /**
  * Haste editor mode
@@ -121,11 +121,18 @@ public:
 
 	void UpdateBrushRotation();
 
+	static FEditorModeID EM_Haste;
+
+private:
+	FTransform ApplyTransformers(const FTransform& BaseTransform);
+
 private:
 	bool bBrushTraceValid;
 	FVector BrushLocation;
 	FVector BrushScale;
 	FQuat BrushRotation;
+	FTransform BrushCursorTransform;
+	FIntVector LastMousePosition;
 
 	FVector BrushTraceDirection;
 	TArray<UStaticMesh*> SelectedBrushMeshes;
@@ -142,4 +149,7 @@ private:
 	FVector RotationOffset;
 
 	FDelegateHandle ContentBrowserSelectionChangeDelegate;
+
+	class UHasteEdModeSettings* UISettings;
+
 };

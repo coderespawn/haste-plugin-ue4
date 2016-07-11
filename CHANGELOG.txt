@@ -1,0 +1,16 @@
+CHANGELOG: Haste - Rapid Mesh Placement Plugin for UE4
+======================================================
+
+Ver 1.1.1
+---------
+ * Added a flag to control the rotation of the mesh cursor using the mouse wheel
+ 
+Ver 1.1.0
+---------
+ * Fixed breaking changes for 4.12
+ * Mesh names in the world outliner now reflect the static mesh they were created from (@VorGhan)
+ * Added Transformer logics. The user can control the transform of the placed mesh using blueprints (e.g. random rotation, or some user defined pattern)
+ 
+Ver 1.0.0
+---------
+Initial Version

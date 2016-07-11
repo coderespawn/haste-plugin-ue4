@@ -2,12 +2,12 @@
 	"FileVersion" : 3,
 	
 	"FriendlyName" : "Haste",
-	"Version" : 1,
-	"VersionName" : "1.0",
+	"Version" : 12,
+	"VersionName" : "1.1.1",
 	"CreatedBy" : "Ali Akbar Vathi",
 	"CreatedByURL" : "http://coderespawn.com",
 	"EngineVersion" : "4.7.0",
-	"Description" : "Save valuable time with Haste, a plugin that lets you quickly place assets all over your levels",
+	"Description" : "Quickly place meshes all over your scene with point and click",
 	"Category" : "Productivity",
 	"EnabledByDefault" : true,
 	

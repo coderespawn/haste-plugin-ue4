@@ -17,12 +17,17 @@
 #include "Editor/LevelEditor/Public/LevelEditor.h"
 #include "Editor/LevelEditor/Public/SLevelViewport.h"
 #include "ContentBrowserModule.h"
+#include "HasteEdModeToolkit.h"
+#include "HasteEdModeSettings.h"
+#include "Transformer/HasteTransformLogic.h"
+
+FEditorModeID FEdModeHaste::EM_Haste(TEXT("EM_Haste"));
 
 
 #define LOCTEXT_NAMESPACE "HasteEdMode"
 #define HASTE_SNAP_TRACE (10000.f)
 
-DEFINE_LOG_CATEGORY(HasteMode);
+DEFINE_LOG_CATEGORY(LogHasteMode);
 
 #define BRUSH_RADIUS 100
 //
@@ -38,6 +43,7 @@ FEdModeHaste::FEdModeHaste()
 	, bCanAltDrag(false)
 	, bMeshRotating(false)
 	, RotationOffset(FVector::ZeroVector)
+	, UISettings(nullptr)
 {
 	// Load resources and construct brush component
 	UMaterial* BrushMaterial = nullptr;
@@ -60,6 +66,7 @@ FEdModeHaste::FEdModeHaste()
 	BrushLocation = FVector::ZeroVector;
 	BrushScale = FVector(1);
 	BrushRotation = FQuat::Identity;
+	LastMousePosition = FIntVector::ZeroValue;
 
 	ResetBrushMesh();
 }
@@ -80,6 +87,7 @@ void FEdModeHaste::AddReferencedObjects(FReferenceCollector& Collector)
 	FEdMode::AddReferencedObjects(Collector);
 
 	Collector.AddReferencedObject(BrushMeshComponent);
+	Collector.AddReferencedObject(UISettings);
 }
 
 /** FEdMode: Called when the mode is entered */
@@ -89,6 +97,10 @@ void FEdModeHaste::Enter()
 
 	// Clear any selection 
 	GEditor->SelectNone(false, true);
+
+	if (!UISettings) {
+		UISettings = NewObject<UHasteEdModeSettings>();
+	}
 
 	// Bind to editor callbacks
 	FEditorDelegates::NewCurrentLevel.AddSP(this, &FEdModeHaste::NotifyNewCurrentLevel);
@@ -102,8 +114,12 @@ void FEdModeHaste::Enter()
 
 	if (!Toolkit.IsValid())
 	{
-		//Toolkit = MakeShareable(new FHasteEdModeToolkit);
-		//Toolkit->Init(Owner->GetToolkitHost());
+		TSharedPtr<FHasteEdModeToolkit> HasteToolkit = MakeShareable(new FHasteEdModeToolkit);
+		TSharedPtr<SHasteEditor> HasteEditor = SNew(SHasteEditor);
+		HasteEditor->SetSettingsObject(UISettings);
+		HasteToolkit->SetInlineContent(HasteEditor);
+		Toolkit = HasteToolkit;
+		Toolkit->Init(Owner->GetToolkitHost());
 	}
 
 	// Listen for asset selection change events in the content browser
@@ -145,7 +161,7 @@ void FEdModeHaste::Exit()
 
 void FEdModeHaste::OnContentBrowserSelectionChanged(const TArray<FAssetData>& NewSelectedAssets, bool bIsPrimaryBrowser) {
 	if (!bIsPrimaryBrowser) return;
-	UE_LOG(HasteMode, Log, TEXT("Content Browser Selection Changed"));
+	UE_LOG(LogHasteMode, Log, TEXT("Content Browser Selection Changed"));
 
 	SelectedBrushMeshes.Reset();
 
@@ -213,8 +229,7 @@ void FEdModeHaste::Tick(FEditorViewportClient* ViewportClient, float DeltaTime)
 	if (bBrushTraceValid)
 	{
 		// Scale adjustment is due to default sphere SM size.
-		FTransform BrushTransform = FTransform(BrushRotation, BrushLocation, BrushScale);
-		BrushMeshComponent->SetRelativeTransform(BrushTransform);
+		BrushMeshComponent->SetRelativeTransform(BrushCursorTransform);
 
 		if (!BrushMeshComponent->IsRegistered())
 		{
@@ -310,6 +325,11 @@ void FEdModeHaste::HasteBrushTrace(FEditorViewportClient* ViewportClient, int32 
 			bBrushTraceValid = true;
 		}
 	}
+
+	if (bBrushTraceValid) {
+		BrushCursorTransform = FTransform(BrushRotation, BrushLocation, BrushScale);
+		BrushCursorTransform = ApplyTransformers(BrushCursorTransform);
+	}
 }
 
 float SnapRotation(float Value, float SnapWidth) {
@@ -321,11 +341,13 @@ void FEdModeHaste::UpdateBrushRotation()
 	BrushRotation = FQuat::FindBetween(FVector(0, 0, 1), LastHitImpact);
 
 	// Append the brush rotation
-	float RotSnapWidth = GEditor->GetRotGridSize().Yaw;
-	float SnappedOffsetX = SnapRotation(RotationOffset.X, RotSnapWidth);
-	float SnappedOffsetY = SnapRotation(RotationOffset.Y, RotSnapWidth);
-	float SnappedOffsetZ = SnapRotation(RotationOffset.Z, RotSnapWidth);
-	BrushRotation = BrushRotation * FQuat(FVector(0, 0, 1), SnappedOffsetZ * PI / 180.0f);
+	if (UISettings->bRotateOnScroll) {
+		float RotSnapWidth = GEditor->GetRotGridSize().Yaw;
+		float SnappedOffsetX = SnapRotation(RotationOffset.X, RotSnapWidth);
+		float SnappedOffsetY = SnapRotation(RotationOffset.Y, RotSnapWidth);
+		float SnappedOffsetZ = SnapRotation(RotationOffset.Z, RotSnapWidth);
+		BrushRotation = BrushRotation * FQuat(FVector(0, 0, 1), SnappedOffsetZ * PI / 180.0f);
+	}
 }
 
 
@@ -341,7 +363,14 @@ void FEdModeHaste::UpdateBrushRotation()
  */
 bool FEdModeHaste::MouseMove(FEditorViewportClient* ViewportClient, FViewport* Viewport, int32 MouseX, int32 MouseY)
 {
-	HasteBrushTrace(ViewportClient, MouseX, MouseY);
+	FIntVector CurrentMousePosition(MouseX, MouseY, 0);
+	if (LastMousePosition != CurrentMousePosition) {
+		//UE_LOG(LogHasteMode, Log, TEXT("MouseMove (%d, %d)"), MouseX, MouseY);
+		LastMousePosition = CurrentMousePosition;
+		HasteBrushTrace(ViewportClient, MouseX, MouseY);
+		return bBrushTraceValid;
+	}
+
 	return false;
 }
 
@@ -357,9 +386,14 @@ bool FEdModeHaste::MouseMove(FEditorViewportClient* ViewportClient, FViewport* V
  */
 bool FEdModeHaste::CapturedMouseMove(FEditorViewportClient* ViewportClient, FViewport* Viewport, int32 MouseX, int32 MouseY)
 {
-	if (!bMeshRotating) {
+	FIntVector CurrentMousePosition(MouseX, MouseY, 0);
+	if (LastMousePosition != CurrentMousePosition && !bMeshRotating) {
+		//UE_LOG(LogHasteMode, Log, TEXT("CapturedMouseMove (%d, %d)"), MouseX, MouseY);
+		LastMousePosition = CurrentMousePosition;
 		HasteBrushTrace(ViewportClient, MouseX, MouseY);
+		return bBrushTraceValid;
 	}
+
 	return false;
 }
 
@@ -486,14 +520,29 @@ bool FEdModeHaste::HandleClick(FEditorViewportClient* InViewportClient, HHitProx
 
 		MeshActor->GetStaticMeshComponent()->StaticMesh = ActiveBrushMesh;
 		MeshActor->ReregisterAllComponents();
-		FTransform Transform(BrushRotation, BrushLocation, BrushScale);
-		MeshActor->SetActorTransform(Transform);
+		MeshActor->SetActorTransform(BrushCursorTransform);
 
 		// Switch to another mesh from the list
 		ResetBrushMesh();
 	}
 
 	return FEdMode::HandleClick(InViewportClient, HitProxy, Click);
+}
+
+FTransform FEdModeHaste::ApplyTransformers(const FTransform& BaseTransform)
+{
+	FTransform Transform = BaseTransform;
+
+	if (UISettings) {
+		for (UHasteTransformLogic* TransformLogic : UISettings->Transformers) {
+			if (!TransformLogic) continue;
+			FTransform Offset;
+			TransformLogic->TransformObject(Transform, Offset);
+			Transform = Offset * Transform;
+		}
+	}
+
+	return Transform;
 }
 
 FVector FEdModeHaste::GetWidgetLocation() const
