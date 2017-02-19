@@ -1,6 +1,13 @@
 CHANGELOG: Haste - Rapid Mesh Placement Plugin for UE4
 ======================================================
-
+Ver 1.1.3
+---------
+ * Cursor rotation is visible without having to move the mouse.  Cursor tracing is now done on every frame, instead of a mouse move event
+ 
+Ver 1.1.2
+---------
+ * Fixed breaking changes for 4.14
+ 
 Ver 1.1.1
 ---------
  * Added a flag to control the rotation of the mesh cursor using the mouse wheel
