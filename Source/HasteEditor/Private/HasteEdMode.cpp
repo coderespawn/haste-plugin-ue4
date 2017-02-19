@@ -57,7 +57,7 @@ FEdModeHaste::FEdModeHaste()
 	BrushMeshComponent = NewObject<UStaticMeshComponent>();
 	BrushMeshComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	BrushMeshComponent->SetCollisionObjectType(ECC_WorldDynamic);
-	BrushMeshComponent->StaticMesh = DefaultBrushMesh;
+	BrushMeshComponent->SetStaticMesh(DefaultBrushMesh);
 	BrushMeshComponent->OverrideMaterials.Add(BrushMaterial);
 	BrushMeshComponent->SetAbsolute(true, true, true);
 	BrushMeshComponent->CastShadow = false;
@@ -224,6 +224,9 @@ void FEdModeHaste::Tick(FEditorViewportClient* ViewportClient, float DeltaTime)
 
 	FEdMode::Tick(ViewportClient, DeltaTime);
 
+	// Trace the brush
+	HasteBrushTrace(ViewportClient, LastMousePosition.X, LastMousePosition.Y);
+
 
 	// Update the position and size of the brush component
 	if (bBrushTraceValid)
@@ -367,7 +370,7 @@ bool FEdModeHaste::MouseMove(FEditorViewportClient* ViewportClient, FViewport* V
 	if (LastMousePosition != CurrentMousePosition) {
 		//UE_LOG(LogHasteMode, Log, TEXT("MouseMove (%d, %d)"), MouseX, MouseY);
 		LastMousePosition = CurrentMousePosition;
-		HasteBrushTrace(ViewportClient, MouseX, MouseY);
+		//HasteBrushTrace(ViewportClient, MouseX, MouseY);
 		return bBrushTraceValid;
 	}
 
@@ -390,7 +393,7 @@ bool FEdModeHaste::CapturedMouseMove(FEditorViewportClient* ViewportClient, FVie
 	if (LastMousePosition != CurrentMousePosition && !bMeshRotating) {
 		//UE_LOG(LogHasteMode, Log, TEXT("CapturedMouseMove (%d, %d)"), MouseX, MouseY);
 		LastMousePosition = CurrentMousePosition;
-		HasteBrushTrace(ViewportClient, MouseX, MouseY);
+		//HasteBrushTrace(ViewportClient, MouseX, MouseY);
 		return bBrushTraceValid;
 	}
 
@@ -518,7 +521,7 @@ bool FEdModeHaste::HandleClick(FEditorViewportClient* InViewportClient, HHitProx
 		// Rename the display name of the new actor in the editor to reflect the mesh that is being created from.
 		FActorLabelUtilities::SetActorLabelUnique(MeshActor, ActiveBrushMesh->GetName());
 
-		MeshActor->GetStaticMeshComponent()->StaticMesh = ActiveBrushMesh;
+		MeshActor->GetStaticMeshComponent()->SetStaticMesh(ActiveBrushMesh);
 		MeshActor->ReregisterAllComponents();
 		MeshActor->SetActorTransform(BrushCursorTransform);
 

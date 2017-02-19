@@ -151,5 +151,4 @@ private:
 	FDelegateHandle ContentBrowserSelectionChangeDelegate;
 
 	class UHasteEdModeSettings* UISettings;
-
 };
